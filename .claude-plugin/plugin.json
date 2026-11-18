@@ -1,0 +1,34 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "secret-vault",
+  "version": "0.2.0",
+  "description": "Private secret entry: a masked dialog whose value never reaches the model, plus .env read-blocking and tool-output redaction.",
+  "author": {
+    "name": "allen",
+    "email": "allenhsu.taiwan@gmail.com"
+  },
+  "skills": [
+    "./"
+  ],
+  "userConfig": {
+    "position": {
+      "type": "string",
+      "title": "輸入框位置",
+      "description": "pane：右側視窗，開了就能直接打字。band：輸入框正上方的整寬橫條，要先點一下或按 ctrl+x tab 才能打字；開著時，一般輸入框送出的內容會被攔下，不會送給模型。",
+      "default": "pane",
+      "options": [
+        "pane",
+        "band"
+      ]
+    }
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/allen-hsu/claude-code-secret-vault",
+  "repository": "https://github.com/allen-hsu/claude-code-secret-vault",
+  "keywords": [
+    "secrets",
+    "api-key",
+    "env",
+    "privacy"
+  ]
+}

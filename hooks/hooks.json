@@ -1,0 +1,5 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "description": "secret-vault: private secret entry that never reaches the model",
+  "modules": ["./register.tsx"]
+}

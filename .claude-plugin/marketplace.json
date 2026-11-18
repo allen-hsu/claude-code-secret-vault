@@ -1,0 +1,13 @@
+{
+  "name": "claude-code-secret-vault",
+  "owner": {
+    "name": "allen-hsu"
+  },
+  "plugins": [
+    {
+      "name": "secret-vault",
+      "source": "./",
+      "description": "Private secret entry: a masked dialog whose value never reaches the model, plus .env read-blocking and tool-output redaction."
+    }
+  ]
+}
