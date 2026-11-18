@@ -31,7 +31,7 @@ claude plugin install secret-vault --marketplace allen-hsu/claude-code-secret-va
 
 | 存到 | 值放在哪裡 | Claude 怎麼用 |
 | --- | --- | --- |
-| `.env` 檔 | session 工作目錄裡的 `.env`，加引號、一個名稱一行 | 讓程式自己讀檔（`dotenv`、`docker compose --env-file` 等） |
+| `.env` 檔 | session 工作目錄裡的 `.env`，加引號、一個名稱一行 | 讓程式照預設自己讀，指令裡不寫出檔名（`docker compose`、`dotenv` 都會讀所在目錄的 `.env`） |
 | 本次 session | Claude Code 這個行程的環境變數，關掉就消失，不寫磁碟 | 在 shell 指令裡用 `$NAME`，由 shell 展開 |
 | 私有保管庫 | 這個 plugin 自己在你電腦上的儲存區 | Claude 的任何工具都讀不到 |
 
@@ -41,7 +41,7 @@ claude plugin install secret-vault --marketplace allen-hsu/claude-code-secret-va
 
 ## 其他功能
 
-- **擋住讀取 `.env`**：用 Read、Edit、Write、Grep、Glob 碰 `.env` 會被擋下；shell 指令只要提到 `.env` 也會被擋，不管是哪個程式（`cat`、`python`、`base64`、`source` 等）。比對不分大小寫，因為在 macOS 上 `.ENV` 就是同一個檔案。把檔案交給程式自己讀（`--env-file .env`）不擋，範本檔（`.env.example`、`.env.sample`、`.env.template`）也不擋。
+- **擋住讀取 `.env`**：用 Read、Edit、Write、Grep、Glob 碰 `.env` 會被擋下；shell 指令只要提到 `.env` 也會被擋，不管是哪個程式（`cat`、`python`、`base64`、`source` 等）。比對不分大小寫，因為在 macOS 上 `.ENV` 就是同一個檔案。用 `--env-file .env` 交給程式也會擋，因為這類程式可以把讀到的值印出來（`docker compose --env-file .env config` 就會）。範本檔（`.env.example`、`.env.sample`、`.env.template`）不擋。
 - **只接受一般的變數名稱**：名稱只能用英文字母、數字和底線，而且不能以數字開頭；其他名稱在開輸入框前就會被拒絕，所以名稱沒辦法替 `.env` 多寫出別的行。
 - **遮蔽工具輸出裡的已知值**：這個 session 存過的值，只要 8 個字元以上，出現在任何工具的輸出時都會被換成 `[secret-vault: 已遮蔽]`，Claude 看不到原值。
 - **貼錯地方的保險**：機密輸入框開著時，你在一般輸入框送出的內容會被攔下、不送給 Claude，並提示你改用機密輸入框。斜線指令照常放行。

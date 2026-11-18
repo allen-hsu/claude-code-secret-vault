@@ -148,14 +148,14 @@ const ENV_PATH = /(?:^|[\s"'`(=:;|&<>])(?:[~.\w/-]*\/)?\.env(?:\.[\w-]+)?(?=$|[\
 /** 只放假值的範本檔（.env.example、.env.sample、.env.template）不含機密，不擋。 */
 const ENV_TEMPLATE = /\.env\.(example|sample|template)$/i
 
-/** 把 .env 交給程式自己讀的寫法（`--env-file .env`、`env_file: .env`）：
- *  值不會印出來，README 也建議這樣用，所以不算「提到」。 */
-const ENV_HANDOFF = /(--env-file[=\s]+|env_file:\s*)(?:[~.\w/-]*\/)?\.env(?:\.[\w-]+)?/gi
-
 /** 指令裡有沒有提到「不是範本」的 .env 路徑（不分大小寫：macOS 的檔案系統
- *  預設不分，`.ENV` 就是 `.env`）。 */
-function mentionsSecretEnvPath(command: string): boolean {
-  const cmd = command.replace(ENV_HANDOFF, ' ')
+ *  預設不分，`.ENV` 就是 `.env`）。
+ *
+ *  沒有例外，連「交給程式自己讀」的 `--env-file .env` 也擋：
+ *  `node --env-file=.env -e 'console.log(process.env)'` 和
+ *  `docker compose --env-file .env config` 都會把值印出來。要讓程式讀 .env，
+ *  就讓它照預設自己讀（docker compose、dotenv 都會讀目錄裡的 .env），不寫出檔名。 */
+function mentionsSecretEnvPath(cmd: string): boolean {
   for (const m of cmd.matchAll(ENV_PATH)) {
     const path = m[0].replace(/^[\s"'`(=:;|&]/, '')
     if (!ENV_TEMPLATE.test(path)) return true

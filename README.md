@@ -31,7 +31,7 @@ The input shows the value as dots, with its length. Pick where it goes, then pre
 
 | Destination | Where the value lives | How Claude uses it |
 | --- | --- | --- |
-| `.env` file | `.env` in the session's working directory, quoted, one line per name | The program loads the file itself (`dotenv`, `docker compose --env-file`, ...) |
+| `.env` file | `.env` in the session's working directory, quoted, one line per name | The program loads it by default, without the command naming the file (`docker compose` and `dotenv` both read `.env` in their directory) |
 | This session | The Claude Code process's environment, until the session ends; nothing on disk | `$NAME` in a shell command; the shell expands it |
 | Private store | The plugin's own store on this computer | No tool Claude has can read it |
 
@@ -41,7 +41,7 @@ After it stores a value Claude asked for, the plugin tells Claude the outcome so
 
 ## What else it does
 
-- **Blocks reading `.env`.** A Read, Edit, Write, Grep or Glob of a `.env` file is refused, and so is any shell command that names one, whatever the program (`cat`, `python`, `base64`, `source`...). Matching ignores case, since `.ENV` is the same file on macOS. Handing the file to a program that loads it (`--env-file .env`) is allowed, and so are templates (`.env.example`, `.env.sample`, `.env.template`).
+- **Blocks reading `.env`.** A Read, Edit, Write, Grep or Glob of a `.env` file is refused, and so is any shell command that names one, whatever the program (`cat`, `python`, `base64`, `source`...). Matching ignores case, since `.ENV` is the same file on macOS. That includes handing the file to a program with `--env-file .env`, because such programs can print what they load (`docker compose --env-file .env config` does). Templates (`.env.example`, `.env.sample`, `.env.template`) are allowed.
 - **Takes plain variable names only.** A name must be letters, digits and underscores, not starting with a digit; anything else is refused before the input opens, so a name cannot write extra lines into `.env`.
 - **Masks known values in tool output.** A value stored in this session, if it is 8 characters or longer, is replaced with `[secret-vault: 已遮蔽]` wherever it shows up in a tool's output, before Claude sees it.
 - **Catches a paste into the wrong box.** While the secret input is open, anything you submit at the normal prompt is held back instead of being sent to Claude, and you are told to use the secret input. Slash commands still go through.

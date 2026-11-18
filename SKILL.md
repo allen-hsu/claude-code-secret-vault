@@ -21,8 +21,9 @@ The user can also open the dialog themselves with `/secret <NAME>`.
 You do not know the value and cannot read it back. Work with it by reference:
 
 - Stored in `process env` — use `$NAME` in a Bash command; the shell expands it.
-- Stored in `.env` — let the program load the file itself (`dotenv`, `docker
-  compose --env-file`, etc.). Reading `.env` with Read, Grep or `cat` is blocked.
+- Stored in `.env` — let the program load it by default, without naming the file
+  in the command (`docker compose` and `dotenv` read `.env` in their directory).
+  Any command that names `.env`, and any Read or Grep of it, is blocked.
 - Stored in the plugin's private store — nothing you run can reach it.
 
 If a secret value ever does appear in a tool's output, it is replaced with
