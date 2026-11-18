@@ -41,7 +41,8 @@ After it stores a value Claude asked for, the plugin tells Claude the outcome so
 
 ## What else it does
 
-- **Blocks reading `.env`.** A Read, Edit, Write, Grep or Glob of a `.env` file, or a shell command that reads one (`cat`, `grep`, `sed`, `cp` and the like), is refused. Template files (`.env.example`, `.env.sample`, `.env.template`) are allowed.
+- **Blocks reading `.env`.** A Read, Edit, Write, Grep or Glob of a `.env` file is refused, and so is any shell command that names one, whatever the program (`cat`, `python`, `base64`, `source`...). Matching ignores case, since `.ENV` is the same file on macOS. Handing the file to a program that loads it (`--env-file .env`) is allowed, and so are templates (`.env.example`, `.env.sample`, `.env.template`).
+- **Takes plain variable names only.** A name must be letters, digits and underscores, not starting with a digit; anything else is refused before the input opens, so a name cannot write extra lines into `.env`.
 - **Masks known values in tool output.** A value stored in this session, if it is 8 characters or longer, is replaced with `[secret-vault: 已遮蔽]` wherever it shows up in a tool's output, before Claude sees it.
 - **Catches a paste into the wrong box.** While the secret input is open, anything you submit at the normal prompt is held back instead of being sent to Claude, and you are told to use the secret input. Slash commands still go through.
 
@@ -61,7 +62,7 @@ The pane asks for 80 columns. Claude Code decides the real width: at most 45% of
 This keeps secrets from slipping into the conversation by accident. It is not an encrypted vault, and it cannot stop a determined program:
 
 - **`.env` is a plain text file.** Any program on your machine can read it.
-- **The `.env` block matches patterns.** It catches the usual tools and commands. Reading the file another way, for example from a Python script, is not caught.
+- **The `.env` block matches the path as written.** A command that names the file is caught. One that reaches it without naming it (a symbolic link, a path assembled at run time, a script file that opens it) is not.
 - **Masking is narrow.** It only replaces exact copies of a value, only values of 8 characters or more, and only values stored since Claude Code last started; the list of values to mask lives in memory.
 - **Values stored for this session are environment variables.** A command such as `printenv` shows them. They are masked until Claude Code restarts, and not after.
 - **The private store is not encrypted.** Claude's tools cannot reach it, but it is still data on your computer.

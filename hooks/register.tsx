@@ -143,13 +143,19 @@ function scrub(node: unknown): { value: unknown; hit: boolean } {
  *
  *  前面刻意不收 `$`，否則 `$.env.get('HOME')` 這種程式碼會被誤判成讀檔
  *  —— 這不是假想，是寫這個 mod 時真的被自己擋下來過一次。 */
-const ENV_PATH = /(?:^|[\s"'`(=:;|&])(?:[~.\w/-]*\/)?\.env(?:\.[\w-]+)?(?=$|[\s"'`)\];|&])/g
+const ENV_PATH = /(?:^|[\s"'`(=:;|&<>])(?:[~.\w/-]*\/)?\.env(?:\.[\w-]+)?(?=$|[\s"'`)\];|&<>])/gi
 
 /** 只放假值的範本檔（.env.example、.env.sample、.env.template）不含機密，不擋。 */
-const ENV_TEMPLATE = /\.env\.(example|sample|template)$/
+const ENV_TEMPLATE = /\.env\.(example|sample|template)$/i
 
-/** 指令裡有沒有提到「不是範本」的 .env 路徑。 */
-function mentionsSecretEnvPath(cmd: string): boolean {
+/** 把 .env 交給程式自己讀的寫法（`--env-file .env`、`env_file: .env`）：
+ *  值不會印出來，README 也建議這樣用，所以不算「提到」。 */
+const ENV_HANDOFF = /(--env-file[=\s]+|env_file:\s*)(?:[~.\w/-]*\/)?\.env(?:\.[\w-]+)?/gi
+
+/** 指令裡有沒有提到「不是範本」的 .env 路徑（不分大小寫：macOS 的檔案系統
+ *  預設不分，`.ENV` 就是 `.env`）。 */
+function mentionsSecretEnvPath(command: string): boolean {
+  const cmd = command.replace(ENV_HANDOFF, ' ')
   for (const m of cmd.matchAll(ENV_PATH)) {
     const path = m[0].replace(/^[\s"'`(=:;|&]/, '')
     if (!ENV_TEMPLATE.test(path)) return true
@@ -168,21 +174,29 @@ function touchesEnvFile(tool: string, input: any): boolean {
   const asText = (v: unknown) => (typeof v === 'string' ? v : '')
   if (tool === 'Read' || tool === 'Edit' || tool === 'Write' || tool === 'NotebookEdit') {
     const file = asText(input?.file_path)
-    return /(^|\/)\.env(\.|$)/.test(file) && !ENV_TEMPLATE.test(file)
+    return /(^|\/)\.env(\.|$)/i.test(file) && !ENV_TEMPLATE.test(file)
   }
   if (tool === 'Bash') {
-    const cmd = withoutHeredocBodies(asText(input?.command))
-    return mentionsSecretEnvPath(cmd) && /\b(cat|less|more|head|tail|bat|grep|rg|awk|sed|cp|xxd|od|strings)\b/.test(cmd)
+    // 不管是哪個程式：提到就擋。只擋 cat、grep 這類名單，python、base64、
+    // source 一換就繞過了。
+    return mentionsSecretEnvPath(withoutHeredocBodies(asText(input?.command)))
   }
   if (tool === 'Grep' || tool === 'Glob') {
-    return /\.env/.test(asText(input?.path)) || /\.env/.test(asText(input?.glob)) || /\.env/.test(asText(input?.pattern))
+    return /\.env/i.test(asText(input?.path)) || /\.env/i.test(asText(input?.glob)) || /\.env/i.test(asText(input?.pattern))
   }
   return false
 }
 
 /* ─── 開視窗（不等待！） ─────────────────────────────────────── */
 
+/** 名稱來自模型或使用者，會原樣寫進 .env 的一行：只收一般的變數名稱，
+ *  否則名稱裡的換行或 `=` 就能替 .env 多寫出別的行。 */
+const NAME = /^[A-Za-z_][A-Za-z0-9_]{0,127}$/
+
 function openPrompt($: any, name: string, hint: string, resumeModel: boolean): string {
+  if (!NAME.test(name)) {
+    return `「${name.slice(0, 40)}」不是有效的變數名稱：只能用英文字母、數字和底線，而且不能以數字開頭。沒有開啟輸入視窗。`
+  }
   if (pending) return `已經有一個機密輸入視窗開著（${pending.name}），請先完成或取消它。`
   pending = { name, hint, dest: 'env-file', buf: '', resumeModel }
   if (SITE === 'pane') {
